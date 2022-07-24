@@ -1,6 +1,5 @@
 import 'dart:async';
 
-
 import 'package:bloc_ble/src/get_reference.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -36,6 +35,20 @@ class BleConnector{
     },onError: (e) => throw e);
   }
 
+
+  void scanAndConnect(DiscoveredDevice device) async {
+    _connection = ble.connectToAdvertisingDevice(id: device.id,withServices: device.serviceUuids,prescanDuration:const Duration(seconds: 3)).listen((ConnectionStateUpdate state) async {
+      _pushState(state);
+      if(state.connectionState==DeviceConnectionState.connected)
+      {
+        final prefs = await SharedPreferences.getInstance();
+        setDevice(prefs,device);
+      }
+    },onError: (e) => throw e);
+  }
+
+
+
   removeConnection(id) async {
     try{
       _connection.cancel();
@@ -46,8 +59,6 @@ class BleConnector{
        deviceId: id,
        connectionState: DeviceConnectionState.disconnected,
        failure: null,));
-     final prefs = await SharedPreferences.getInstance();
-
     }
     await _connection.cancel();
   }

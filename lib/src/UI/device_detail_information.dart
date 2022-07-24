@@ -8,30 +8,37 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 
 class DeviceInformation extends StatelessWidget{
-  const DeviceInformation({ Key? key,required this.device}):super(key: key);
+  const DeviceInformation({ Key? key,required this.device,required this.isKnow}):super(key: key);
 
   final DiscoveredDevice  device;
-
+  final bool isKnow;
   @override
   Widget build(BuildContext context)
   {
-    return Consumer2<BleConnector,ConnectionStateUpdate>(
-        builder: (_,connector,connectionState,__)=> _WatchMonitor(
+    return Consumer4<BleConnector,ConnectionStateUpdate,SharedPreferences,FlutterReactiveBle>(
+        builder: (_,connector,connectionState,prefs,ble,child)=> _WatchMonitor(
             connector: connector,
             device:device,
-            connectionState: connectionState));
+            connectionState: connectionState,
+            prefs: prefs,
+            isKnow: isKnow,
+            ble:ble,
+          ));
   }
 }
 
 class _WatchMonitor extends StatelessWidget{
-  const _WatchMonitor({required this.connector,required this.device,required this.connectionState});
-
+  _WatchMonitor({required this.connector,required this.device,required this.connectionState,required this.prefs,required this.isKnow,required this.ble});
+  bool isKnow;
   final ConnectionStateUpdate connectionState;
   final DiscoveredDevice device;
   final BleConnector connector;
+  final FlutterReactiveBle ble;
+  final SharedPreferences prefs;
   @override
   Widget build(BuildContext context)
   {
+
     return WillPopScope(
         child: Scaffold(
           body:  SafeArea(
@@ -45,15 +52,15 @@ class _WatchMonitor extends StatelessWidget{
                       const Text("Tap Button to connect to device"),
                       Text('Connection status: ${connectionState.connectionState.toString()}'),
                       ElevatedButton(onPressed: ()  {
-                        connector.removeConnection(connectionState.deviceId);
-                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_)=>const SearchPage()));
+                        connector.removeConnection(device.id);
+                        removeDevice(prefs);
+
                       }, child: const Icon(Icons.remove_circle)),
                       const SizedBox(
                         height: 100,
                       ),
                       ElevatedButton(onPressed: () async {
-                        SharedPreferences prefs = await SharedPreferences.getInstance();
-                        removeDevice(prefs);
+                        print(await ble.discoverServices(device.id));
                       }, child: const Icon(Icons.search)),
                     ]),
               ),

@@ -16,7 +16,7 @@ void setDevice (SharedPreferences prefs,DiscoveredDevice device) async {
 }
 
 DiscoveredDevice? getDevice (SharedPreferences prefs) {
-  print("we got here");
+
   final String? id = prefs.getString('id');
 
   final String? name = prefs.getString('name');

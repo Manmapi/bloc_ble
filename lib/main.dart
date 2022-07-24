@@ -1,3 +1,4 @@
+
 import 'package:bloc_ble/src/UI/ble_not_on.dart';
 import 'package:bloc_ble/src/UI/device_detail_information.dart';
 import 'package:bloc_ble/src/ble/ble_connector.dart';
@@ -24,6 +25,7 @@ void main() async {
   final _connector = BleConnector(ble: _ble);
   final  prefs = await SharedPreferences.getInstance();
   runApp(MultiProvider(providers: [
+    Provider.value(value: _ble),
     Provider.value(value: prefs),
     Provider.value(value: _bleScanner),
     Provider.value(value: _connector),
@@ -52,13 +54,14 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: Consumer2<BleStatus,SharedPreferences>(builder: (_,status,prefs,child)  {
+      home: Consumer3<BleStatus,SharedPreferences,BleConnector>(builder: (_,status,prefs,connector,child)  {
         if(status == BleStatus.ready)
           {
             final device = getDevice(prefs);
             if(device!= null)
               {
-                return DeviceInformation(device: device);
+                connector.scanAndConnect(device);
+                return DeviceInformation(device: device,isKnow: true,);
               }
             return const SearchPage();
           }

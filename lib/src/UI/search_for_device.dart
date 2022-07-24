@@ -67,7 +67,7 @@ class _SearchForDeviceState extends State<_SearchForDevice> {
                         title: Text(widget.status.discoverdDevices[index].name
                         ,style:const TextStyle(fontSize: 25,fontWeight: FontWeight.w500),),
                         onTap: (){
-                          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=> DeviceInformation(device: widget.status.discoverdDevices[index],)));
+                          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=> DeviceInformation(device: widget.status.discoverdDevices[index],isKnow: false,)));
                         },
                       );
                 }),
