@@ -1,8 +1,10 @@
 import 'package:bloc_ble/src/UI/search_for_device.dart';
 import 'package:bloc_ble/src/ble/ble_connector.dart';
+import 'package:bloc_ble/src/get_reference.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 class DeviceInformation extends StatelessWidget{
@@ -33,25 +35,36 @@ class _WatchMonitor extends StatelessWidget{
     return WillPopScope(
         child: Scaffold(
           body:  SafeArea(
-            child: Center(
-              child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text("Tap Button to connect to device"),
-                    Text('Connection status: ${connectionState.connectionState.toString()}'),
-                    ElevatedButton(onPressed: ()  {
-                      connector.removeConnection(connectionState.deviceId);
-                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_)=> SearchPage()));
-                    }, child: const Icon(Icons.remove_circle))
-                  ]),
-            ),
+              child: Center(
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      const SizedBox(
+                        height: 100,
+                      ),
+                      const Text("Tap Button to connect to device"),
+                      Text('Connection status: ${connectionState.connectionState.toString()}'),
+                      ElevatedButton(onPressed: ()  {
+                        connector.removeConnection(connectionState.deviceId);
+                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_)=>const SearchPage()));
+                      }, child: const Icon(Icons.remove_circle)),
+                      const SizedBox(
+                        height: 100,
+                      ),
+                      ElevatedButton(onPressed: () async {
+                        SharedPreferences prefs = await SharedPreferences.getInstance();
+                        removeDevice(prefs);
+                      }, child: const Icon(Icons.search)),
+                    ]),
+              ),
+
           ),
           floatingActionButton: FloatingActionButton(
             child: const Icon(Icons.connect_without_contact),
             onPressed: (){
               if(connectionState.connectionState==DeviceConnectionState.disconnected)
               {
-                connector.establishConnect(device.id);
+                connector.establishConnect(device);
               }
               else{
                 throw "Already connected, bitch!";

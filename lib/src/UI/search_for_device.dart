@@ -35,7 +35,7 @@ class _SearchForDeviceState extends State<_SearchForDevice> {
 
   _startScanning() async {
     widget.startScan([Uuid.parse('50db152A-418d-4690-9589-ab7be9e22684')]);
-    Timer(const Duration(seconds: 3),() {
+    Timer(const Duration(seconds: 5),() {
       widget.stopScan();
     });
   }

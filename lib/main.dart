@@ -1,7 +1,9 @@
 import 'package:bloc_ble/src/UI/ble_not_on.dart';
+import 'package:bloc_ble/src/UI/device_detail_information.dart';
 import 'package:bloc_ble/src/ble/ble_connector.dart';
 import 'package:bloc_ble/src/ble/ble_scanner.dart';
 import 'package:bloc_ble/src/ble/ble_status.dart';
+import 'package:bloc_ble/src/get_reference.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -53,6 +55,11 @@ class MyApp extends StatelessWidget {
       home: Consumer2<BleStatus,SharedPreferences>(builder: (_,status,prefs,child)  {
         if(status == BleStatus.ready)
           {
+            final device = getDevice(prefs);
+            if(device!= null)
+              {
+                return DeviceInformation(device: device);
+              }
             return const SearchPage();
           }
         else
