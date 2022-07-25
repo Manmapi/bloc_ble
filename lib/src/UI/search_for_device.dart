@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:bloc_ble/src/UI/device_detail_information.dart';
+import 'package:bloc_ble/src/ble/ble_connector.dart';
+import 'package:bloc_ble/src/ble/ble_device_interaction.dart';
 import 'package:bloc_ble/src/ble/ble_scanner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
@@ -11,11 +13,15 @@ class SearchPage extends StatelessWidget{
   const SearchPage({Key? key}): super(key: key);
   @override
   Widget build(BuildContext context){
-    return Consumer2<BleScanner,BleScannerState>(
-        builder:  (_,_bleScanner,status,__) => _SearchForDevice(
+    return Consumer4<BleScanner,BleScannerState,BleConnector,BleInteraction>(
+        builder:  (_,_bleScanner,status,connector,interactor,__) => _SearchForDevice(
             status: status,
             startScan: _bleScanner.startScan,
-            stopScan: _bleScanner.stopScan)
+            connector: connector,
+            interactor: interactor,
+            stopScan: _bleScanner.stopScan,
+            clearScan: _bleScanner.clearState,
+        ),
     );
   }
 }
@@ -24,15 +30,17 @@ class _SearchForDevice extends StatefulWidget{
   final BleScannerState status;
   final void Function(List<Uuid>) startScan;
   final void Function() stopScan;
-
-  const _SearchForDevice({required this.status,required this.startScan, required this.stopScan});
+  final void Function () clearScan;
+  final BleConnector connector;
+  final BleInteraction interactor;
+  const _SearchForDevice({required this.status,required this.startScan, required this.stopScan,required this.connector,required this.interactor,required this.clearScan});
 
   @override
   State<_SearchForDevice> createState() => _SearchForDeviceState();
 }
 
 class _SearchForDeviceState extends State<_SearchForDevice> {
-
+  bool isScanning = false;
   _startScanning() async {
     widget.startScan([Uuid.parse('50db152A-418d-4690-9589-ab7be9e22684')]);
     Timer(const Duration(seconds: 5),() {
@@ -66,8 +74,10 @@ class _SearchForDeviceState extends State<_SearchForDevice> {
                             child: Align(alignment: Alignment.center, child: Icon(Icons.bluetooth,color: Colors.blue,)),),
                         title: Text(widget.status.discoverdDevices[index].name
                         ,style:const TextStyle(fontSize: 25,fontWeight: FontWeight.w500),),
-                        onTap: (){
-                          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=> DeviceInformation(device: widget.status.discoverdDevices[index],isKnow: false,)));
+                        onTap: () async {
+                          widget.stopScan();
+                          widget.connector.establishConnect(widget.status.discoverdDevices[index]);
+                          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=> DeviceInformation(device: widget.status.discoverdDevices[index])));
                         },
                       );
                 }),
@@ -80,11 +90,10 @@ class _SearchForDeviceState extends State<_SearchForDevice> {
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
         width: double.infinity,
         child: FloatingActionButton.extended(
-          label: const Text("Find watch"),
+          label:widget.status.scanIsInProgress?const CircularProgressIndicator():const Text("Find watch"),
           hoverColor: Colors.grey,
           backgroundColor:widget.status.scanIsInProgress?Colors.grey:Colors.blue ,
           onPressed: widget.status.scanIsInProgress? null :() {_startScanning();},
-
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,

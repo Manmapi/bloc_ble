@@ -30,37 +30,15 @@ class BleScanner {
         discoverdDevices: _devices,
         scanIsInProgress: _subscription!=null ));
   }
-  // void ScanWithId(List<Uuid> serviceIds,String deviceID)
-  // {
-  //   DiscoveredDevice? knownDevice;
-  //   _subscription?.cancel();
-  //   _devices.clear();
-  //   _subscription = _ble.scanForDevices(withServices: serviceIds).listen((device) {
-  //     final knowDeviceIndex = _devices.indexWhere((element) {
-  //       if(device.id == deviceID)
-  //         {
-  //           if(element.id == device.id){
-  //             return true;
-  //           }
-  //         }
-  //       return false;
-  //     });
-  //     if(knowDeviceIndex >= 0)
-  //     {
-  //       _devices[knowDeviceIndex] = device;
-  //     }
-  //     else{
-  //       _devices.add(device);
-  //     }
-  //     _pushState();
-  //   },onError: (e) => throw Exception(e)
-  //   );
-  // }
+
+  void clearState() {
+    _stateStreamController.sink.add(const BleScannerState(discoverdDevices: [], scanIsInProgress: false));
+  }
   void startScan (List<Uuid> serviceIds) {
     _subscription?.cancel();
     _devices.clear();
     _subscription = _ble.scanForDevices(withServices: serviceIds).listen((device) {
-      print(device);
+
        final knowDeviceIndex = _devices.indexWhere((element) => element.id == device.id);
        if(knowDeviceIndex >= 0)
          {

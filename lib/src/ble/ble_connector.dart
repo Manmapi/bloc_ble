@@ -25,7 +25,7 @@ class BleConnector{
   late StreamSubscription<ConnectionStateUpdate> _connection;
   //Function to make connection with device
   void establishConnect(DiscoveredDevice device) async {
-    _connection = ble.connectToDevice(id: device.id).listen((ConnectionStateUpdate state) async {
+    _connection = ble.connectToDevice(id: device.id,connectionTimeout: const Duration(seconds: 2),).listen((ConnectionStateUpdate state) async {
       _pushState(state);
       if(state.connectionState==DeviceConnectionState.connected)
         {
@@ -37,15 +37,18 @@ class BleConnector{
 
 
   void scanAndConnect(DiscoveredDevice device) async {
-    _connection = ble.connectToAdvertisingDevice(id: device.id,withServices: device.serviceUuids,prescanDuration:const Duration(seconds: 3)).listen((ConnectionStateUpdate state) async {
-      _pushState(state);
-      if(state.connectionState==DeviceConnectionState.connected)
-      {
-        final prefs = await SharedPreferences.getInstance();
-        setDevice(prefs,device);
-      }
-    },onError: (e) => throw e);
+    _connection = ble.connectToAdvertisingDevice(id: device.id,
+        connectionTimeout: const Duration(seconds: 2),
+        withServices: device.serviceUuids,
+        prescanDuration:const Duration(seconds: 3)).listen((ConnectionStateUpdate state) async {
+          if(state.connectionState==DeviceConnectionState.connected)
+          {
+            _pushState(state);
+          }
+    },onError: (e) => print(e) );
   }
+
+
 
 
 

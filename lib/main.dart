@@ -2,6 +2,7 @@
 import 'package:bloc_ble/src/UI/ble_not_on.dart';
 import 'package:bloc_ble/src/UI/device_detail_information.dart';
 import 'package:bloc_ble/src/ble/ble_connector.dart';
+import 'package:bloc_ble/src/ble/ble_device_interaction.dart';
 import 'package:bloc_ble/src/ble/ble_scanner.dart';
 import 'package:bloc_ble/src/ble/ble_status.dart';
 import 'package:bloc_ble/src/get_reference.dart';
@@ -11,6 +12,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:bloc_ble/src/UI/search_for_device.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,12 +25,15 @@ void main() async {
   final _bleStatus = BleStatusMonitor(_ble);
   final _bleScanner = BleScanner(ble: _ble);
   final _connector = BleConnector(ble: _ble);
+  final _interactor = BleInteraction(ble: _ble);
   final  prefs = await SharedPreferences.getInstance();
   runApp(MultiProvider(providers: [
     Provider.value(value: _ble),
     Provider.value(value: prefs),
     Provider.value(value: _bleScanner),
     Provider.value(value: _connector),
+    Provider.value(value: _interactor),
+    StreamProvider<List<DiscoveredService>>(create: (_) => _interactor.serviceState, initialData:const <DiscoveredService>[]),
     StreamProvider<ConnectionStateUpdate>(create: (_) => _connector.state, initialData: const ConnectionStateUpdate(
       deviceId: '',
       connectionState: DeviceConnectionState.disconnected,
@@ -38,8 +43,7 @@ void main() async {
     StreamProvider<BleScannerState>(create: (_) => _bleScanner.state , initialData:const BleScannerState(
       discoverdDevices: [],
       scanIsInProgress: false,
-    ))
-      ],
+    )),],
     child: const MyApp(),) );
 }
 
@@ -54,14 +58,14 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: Consumer3<BleStatus,SharedPreferences,BleConnector>(builder: (_,status,prefs,connector,child)  {
+      home: Consumer4<BleStatus,SharedPreferences,BleConnector,BleInteraction>(builder: (_,status,prefs,connector,interactor,child)  {
         if(status == BleStatus.ready)
           {
             final device = getDevice(prefs);
             if(device!= null)
               {
                 connector.scanAndConnect(device);
-                return DeviceInformation(device: device,isKnow: true,);
+                return DeviceInformation(device: device);
               }
             return const SearchPage();
           }
