@@ -3,6 +3,7 @@ import 'package:bloc_ble/src/UI/ble_not_on.dart';
 import 'package:bloc_ble/src/UI/device_detail_information.dart';
 import 'package:bloc_ble/src/ble/ble_connector.dart';
 import 'package:bloc_ble/src/ble/ble_device_interaction.dart';
+import 'package:bloc_ble/src/ble/ble_logger.dart';
 import 'package:bloc_ble/src/ble/ble_scanner.dart';
 import 'package:bloc_ble/src/ble/ble_status.dart';
 import 'package:bloc_ble/src/get_reference.dart';
@@ -27,7 +28,9 @@ void main() async {
   final _connector = BleConnector(ble: _ble);
   final _interactor = BleInteraction(ble: _ble);
   final  prefs = await SharedPreferences.getInstance();
+  final _logger = BleLogger();
   runApp(MultiProvider(providers: [
+    Provider.value(value: _logger),
     Provider.value(value: _ble),
     Provider.value(value: prefs),
     Provider.value(value: _bleScanner),
