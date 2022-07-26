@@ -45,7 +45,7 @@ class BleConnector{
           {
             _pushState(state);
           }
-    },onError: (e) => print(e) );
+    },onError: (e) => throw e );
   }
 
 
@@ -56,7 +56,7 @@ class BleConnector{
     try{
       _connection.cancel();
     } catch (e){ 
-      print('Error disconnection from a device: $e');
+      throw 'Error disconnection from a device: $e';
     } finally {
      _pushState(ConnectionStateUpdate(
        deviceId: id,

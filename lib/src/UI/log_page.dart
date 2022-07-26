@@ -1,29 +1,36 @@
+import 'package:bloc_ble/src/ble/ble_action.dart';
 import 'package:bloc_ble/src/ble/ble_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class LogPage extends StatelessWidget{
-  
+
+  LogPage({Key? key}):super(key: key);
   @override 
   Widget build(BuildContext context)
   {
-    return Consumer<BleLogger>(builder: (_,logger,__) => _LogPage(logger: logger,) );
-  }
-}
-class _LogPage extends StatelessWidget{
-  final BleLogger logger;
-  _LogPage({required this.logger});
-  @override 
-  Widget build(BuildContext context){
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child:(logger.logger.length>0)?ListView.builder(
-              itemCount: logger.logger.length,
-              itemBuilder: (_,index)=> Text(logger.logger[index])
-          ):null,
-        ),
-      ),
+    return Consumer<List<String>>(
+        builder: (_,loggerState,__) =>
+        Scaffold(
+          body: SafeArea(
+            child: Center(
+              child:(loggerState.isNotEmpty)?ListView.builder(
+                  itemCount: loggerState.length,
+                  itemBuilder: (_,index)=> Text(loggerState[index])
+              ):null,
+            ),
+          ),
+        )
     );
   }
 }
+// class _LogPage extends StatelessWidget{
+//   final List<String> loggerState;
+//
+//   const _LogPage({required this.loggerState});
+//   @override
+//   Widget build(BuildContext context){
+//     print('rebuild');
+//     return
+//   }
+// }

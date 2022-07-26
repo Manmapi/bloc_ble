@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc_ble/src/UI/device_detail_information.dart';
+import 'package:bloc_ble/src/ble/ble_action.dart';
 import 'package:bloc_ble/src/ble/ble_connector.dart';
 import 'package:bloc_ble/src/ble/ble_device_interaction.dart';
 import 'package:bloc_ble/src/ble/ble_scanner.dart';
@@ -13,14 +14,14 @@ class SearchPage extends StatelessWidget{
   const SearchPage({Key? key}): super(key: key);
   @override
   Widget build(BuildContext context){
-    return Consumer4<BleScanner,BleScannerState,BleConnector,BleInteraction>(
-        builder:  (_,_bleScanner,status,connector,interactor,__) => _SearchForDevice(
+    return Consumer2<BleAction,BleScannerState>(
+        builder:  (_,action,status,__) => _SearchForDevice(
             status: status,
-            startScan: _bleScanner.startScan,
-            connector: connector,
-            interactor: interactor,
-            stopScan: _bleScanner.stopScan,
-            clearScan: _bleScanner.clearState,
+            startScan: action.scanner.startScan,
+            connector: action.connector,
+            interactor: action.interactor,
+            stopScan: action.scanner.stopScan,
+            clearScan: action.scanner.clearState,
         ),
     );
   }

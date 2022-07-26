@@ -28,8 +28,9 @@ class BleInteraction {
       _pushService(services);
     }
     catch(e){
-      throw e ;
+      rethrow;
     }
+
   }
 
 }

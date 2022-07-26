@@ -1,6 +1,7 @@
 
 import 'package:bloc_ble/src/UI/ble_not_on.dart';
 import 'package:bloc_ble/src/UI/device_detail_information.dart';
+import 'package:bloc_ble/src/ble/ble_action.dart';
 import 'package:bloc_ble/src/ble/ble_connector.dart';
 import 'package:bloc_ble/src/ble/ble_device_interaction.dart';
 import 'package:bloc_ble/src/ble/ble_logger.dart';
@@ -22,28 +23,30 @@ void main() async {
   await Permission.bluetoothConnect.request();
   await Permission.bluetoothScan.request();
 
-  final _ble = FlutterReactiveBle();
-  final _bleStatus = BleStatusMonitor(_ble);
-  final _bleScanner = BleScanner(ble: _ble);
-  final _connector = BleConnector(ble: _ble);
-  final _interactor = BleInteraction(ble: _ble);
+  final ble = FlutterReactiveBle();
+  final bleStatus = BleStatusMonitor(ble);
+  final bleScanner = BleScanner(ble: ble);
+  final connector = BleConnector(ble: ble);
+  final interactor = BleInteraction(ble: ble);
   final  prefs = await SharedPreferences.getInstance();
-  final _logger = BleLogger();
+  final logger = BleLogger();
+  final bleAction = BleAction(connector: connector, scanner: bleScanner, interactor: interactor, logger: logger);
+
+
   runApp(MultiProvider(providers: [
-    Provider.value(value: _logger),
-    Provider.value(value: _ble),
+    Provider.value(value: bleAction),
+    Provider.value(value: logger),
+    Provider.value(value: ble),
     Provider.value(value: prefs),
-    Provider.value(value: _bleScanner),
-    Provider.value(value: _connector),
-    Provider.value(value: _interactor),
-    StreamProvider<List<DiscoveredService>>(create: (_) => _interactor.serviceState, initialData:const <DiscoveredService>[]),
-    StreamProvider<ConnectionStateUpdate>(create: (_) => _connector.state, initialData: const ConnectionStateUpdate(
+    StreamProvider<List<String>>(create: (_) => bleAction.logger.loggerState , initialData: const <String>[]),
+    StreamProvider<List<DiscoveredService>>(create: (_) => bleAction.interactor.serviceState, initialData:const <DiscoveredService>[]),
+    StreamProvider<ConnectionStateUpdate>(create: (_) => bleAction.connector.state, initialData: const ConnectionStateUpdate(
       deviceId: '',
       connectionState: DeviceConnectionState.disconnected,
       failure: null,
     )),
-    StreamProvider<BleStatus>(create: (_) => _bleStatus.state, initialData: BleStatus.unknown),
-    StreamProvider<BleScannerState>(create: (_) => _bleScanner.state , initialData:const BleScannerState(
+    StreamProvider<BleStatus>(create: (_) => bleStatus.state, initialData: BleStatus.unknown),
+    StreamProvider<BleScannerState>(create: (_) => bleAction.scanner.state , initialData:const BleScannerState(
       discoverdDevices: [],
       scanIsInProgress: false,
     )),],
@@ -61,13 +64,14 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: Consumer4<BleStatus,SharedPreferences,BleConnector,BleInteraction>(builder: (_,status,prefs,connector,interactor,child)  {
+      home: Consumer3<BleStatus,SharedPreferences,BleAction>(builder: (_,status,prefs,action,child)  {
         if(status == BleStatus.ready)
           {
             final device = getDevice(prefs);
             if(device!= null)
               {
-                connector.scanAndConnect(device);
+                action.connector.scanAndConnect(device);
+
                 return DeviceInformation(device: device);
               }
             return const SearchPage();

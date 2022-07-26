@@ -30,7 +30,7 @@ DiscoveredDevice? getDevice (SharedPreferences prefs) {
 
   if(id!=null&& name!=null && rssi!= null)
     {
-      device = DiscoveredDevice(id: id, name: name, serviceData: {}, manufacturerData: manufacturerData, rssi: rssi, serviceUuids: [serviceUuids]);
+      device = DiscoveredDevice(id: id, name: name, serviceData: const {}, manufacturerData: manufacturerData, rssi: rssi, serviceUuids: [serviceUuids]);
       return device;
     }
   return null;
