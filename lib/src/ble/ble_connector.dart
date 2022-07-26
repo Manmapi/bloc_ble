@@ -24,7 +24,7 @@ class BleConnector{
   // End of stream
   late StreamSubscription<ConnectionStateUpdate> _connection;
   //Function to make connection with device
-  void establishConnect(DiscoveredDevice device) async {
+  Future<void> establishConnect(DiscoveredDevice device) async {
     _connection = ble.connectToDevice(id: device.id,connectionTimeout: const Duration(seconds: 2),).listen((ConnectionStateUpdate state) async {
       _pushState(state);
       if(state.connectionState==DeviceConnectionState.connected)
@@ -41,10 +41,7 @@ class BleConnector{
         connectionTimeout: const Duration(seconds: 2),
         withServices: device.serviceUuids,
         prescanDuration:const Duration(seconds: 3)).listen((ConnectionStateUpdate state) async {
-          if(state.connectionState==DeviceConnectionState.connected)
-          {
             _pushState(state);
-          }
     },onError: (e) => throw e );
   }
 

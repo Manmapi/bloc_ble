@@ -1,12 +1,16 @@
-import 'package:bloc_ble/src/ble/ble_action.dart';
-import 'package:bloc_ble/src/ble/ble_logger.dart';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class LogPage extends StatelessWidget{
+class LogPage extends StatefulWidget{
 
-  LogPage({Key? key}):super(key: key);
-  @override 
+  const LogPage({Key? key}):super(key: key);
+  @override
+  State<LogPage> createState() => _LogPageState();
+}
+
+class _LogPageState extends State<LogPage> {
+  @override
   Widget build(BuildContext context)
   {
     return Consumer<List<String>>(

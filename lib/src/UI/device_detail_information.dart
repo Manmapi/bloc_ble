@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:bloc_ble/src/UI/log_page.dart';
 import 'package:bloc_ble/src/UI/search_for_device.dart';
+import 'package:bloc_ble/src/Widget/time_set_widget.dart';
 import 'package:bloc_ble/src/ble/ble_action.dart';
 import 'package:bloc_ble/src/ble/ble_connector.dart';
 import 'package:bloc_ble/src/ble/ble_logger.dart';
 import 'package:bloc_ble/src/ble/ble_scanner.dart';
+import 'package:bloc_ble/src/ble/handle_data.dart';
 import 'package:bloc_ble/src/get_reference.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
@@ -49,28 +51,18 @@ class _WatchMonitor extends StatefulWidget{
 
 class _WatchMonitorState extends State<_WatchMonitor> {
   List<int> characteristicValue = <int>[-1,-1];
+  Information information =const Information(status: 'Waiting...', checkInStatus1: null, checkInStatus2: null, batteryStatus: true);
   bool isConnected = true;
   StreamSubscription<List<int>>? _subscriptionCharacteristic ;
-  String readHeathStatus(int value) {
-    switch(value)
-    {
-      case 1:
-        return "Alert at ${DateTime.now().toString().substring(0,19)}";
-      case 2:
-        return "Ok at ${DateTime.now().toString().substring(0,19)}";
-      case 3:
-        return "Testing at ${DateTime.now().toString().substring(0,19)}";
-      default:
-        return 'Waiting... at ${DateTime.now().toString().substring(0,19)}';
-    }
 
-  }
   @override
   Widget build(BuildContext context)
   {
+
     Timer(const Duration(seconds: 5),() async {
       if(widget.connectionState.connectionState!=DeviceConnectionState.connected)
         {
+          _subscriptionCharacteristic = null;
           if(mounted)
             {
               setState((){});
@@ -81,15 +73,22 @@ class _WatchMonitorState extends State<_WatchMonitor> {
         {
           if(widget.connectionState.connectionState==DeviceConnectionState.connected)
             {
-                  _subscriptionCharacteristic ??= widget.ble.subscribeToCharacteristic(QualifiedCharacteristic(characteristicId: Uuid.parse('50db1524-418d-4690-9589-ab7be9e22684') , serviceId: Uuid.parse('50bd152a-418d-4690-9589-ab7be9e22684'), deviceId: widget.device.id)).listen((event) {
-                    widget.logger.addLooger(event.toString());
-                    if(mounted)
-                      {
-                        setState(() {
-                          characteristicValue = event;
-                        });
-                      }
-                  });
+
+              _subscriptionCharacteristic ??= widget.ble.subscribeToCharacteristic(QualifiedCharacteristic(characteristicId: Uuid.parse('50db1524-418d-4690-9589-ab7be9e22684') , serviceId: Uuid.parse('50bd152a-418d-4690-9589-ab7be9e22684'), deviceId: widget.device.id)).listen((event) {
+                widget.logger.addLooger(event.toString());
+                if(event[1]==18)
+                  {
+                    set_time.setTime(widget.ble, QualifiedCharacteristic(characteristicId: Uuid.parse('50db1527-418d-4690-9589-ab7be9e22684') , serviceId: Uuid.parse('50bd152a-418d-4690-9589-ab7be9e22684'), deviceId: widget.device.id));
+                  }
+                if(mounted)
+                  {
+                    setState(() {
+                      characteristicValue = event;
+                      information = inforDecode(event, information);
+                      print(information.toString());
+                    });
+                  }
+              });
             }
 
         }
@@ -100,15 +99,11 @@ class _WatchMonitorState extends State<_WatchMonitor> {
               child: Center(
                 child: Container(
                   padding:const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                  child: SingleChildScrollView(
                     child: Column(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          const SizedBox(
-                            height: 10,
-                          ),
                           Align(
-                              alignment: Alignment.topLeft,
+                              alignment: Alignment.centerRight,
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
@@ -128,10 +123,10 @@ class _WatchMonitorState extends State<_WatchMonitor> {
 
                           Row(
                               children: [
-                                const Icon(Icons. battery_4_bar,color: Colors.red,size: 150 ,),
+                                Icon(Icons. battery_4_bar,color: information.batteryStatus?Colors.greenAccent[200]:Colors.redAccent[200],size: 150 ,),
                                 Flexible(
                                       child: Center(
-                                        child: Text("Health Status ${readHeathStatus(characteristicValue[1])}",
+                                        child: Text("Health Status ${information.status}",
                                           softWrap: false,
                                           maxLines: 3,
                                           overflow: TextOverflow.ellipsis,),
@@ -139,44 +134,17 @@ class _WatchMonitorState extends State<_WatchMonitor> {
                                 )
                               ],
                             ),
-                          ElevatedButton(
-                              onPressed: (){
-
-                                _subscriptionCharacteristic?.cancel();
-
-                          },
-                              child: const Text("Unsubscribe")),
-                          ElevatedButton(
-                              onPressed: (){
-                                _subscriptionCharacteristic = widget.ble.subscribeToCharacteristic(QualifiedCharacteristic(characteristicId: Uuid.parse('50db1524-418d-4690-9589-ab7be9e22684') , serviceId: Uuid.parse('50bd152a-418d-4690-9589-ab7be9e22684'), deviceId: widget.device.id)).listen((event) {
-                                  widget.logger.addLooger(event.toString());
-                                  setState(() {
-                                    characteristicValue = event;
-                                  });
-                                });
-                              },
-                              child: const Text("Subscribe")),
-                          ElevatedButton(
-                              onPressed: (){
-                                widget.ble.writeCharacteristicWithoutResponse( QualifiedCharacteristic(characteristicId: Uuid.parse('50db1527-418d-4690-9589-ab7be9e22684') , serviceId: Uuid.parse('50bd152a-418d-4690-9589-ab7be9e22684'), deviceId: widget.device.id), value: [0x02,0x01,0x07]);
-                              },
-                              child: const Text("Subscribe")),
                           Text(characteristicValue.toString()),
                           ElevatedButton(
-                              onPressed: () async {
-                                set_time.setTime(widget.ble, QualifiedCharacteristic(characteristicId: Uuid.parse('50db1527-418d-4690-9589-ab7be9e22684') , serviceId: Uuid.parse('50bd152a-418d-4690-9589-ab7be9e22684'), deviceId: widget.device.id));
-                              },
-                              child: const Text("Time picker")),
-                          ElevatedButton(
                               onPressed: (){
-                                Navigator.push(context, MaterialPageRoute(builder: (context) => LogPage()));
+                                Navigator.push(context, MaterialPageRoute(builder: (context) => const LogPage()));
                               },
                               child: const Text("Logger")),
+                          SetTimeCheck(checkIn1State: information.checkInStatus1,checkIn2State: information.checkInStatus2,ble: widget.ble,characteristic:  QualifiedCharacteristic(characteristicId: Uuid.parse('50db1527-418d-4690-9589-ab7be9e22684') , serviceId: Uuid.parse('50bd152a-418d-4690-9589-ab7be9e22684'), deviceId: widget.device.id),),
                         ]),
                   ),
                 ),
               ),
-          ),
         ),
         onWillPop: () async {
           await widget.connector.removeConnection(widget.connectionState.deviceId);
@@ -184,3 +152,17 @@ class _WatchMonitorState extends State<_WatchMonitor> {
         });
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+

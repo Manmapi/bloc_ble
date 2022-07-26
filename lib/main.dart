@@ -32,7 +32,6 @@ void main() async {
   final logger = BleLogger();
   final bleAction = BleAction(connector: connector, scanner: bleScanner, interactor: interactor, logger: logger);
 
-
   runApp(MultiProvider(providers: [
     Provider.value(value: bleAction),
     Provider.value(value: logger),
