@@ -1,3 +1,5 @@
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
 const int HELP_ALARM      = 1;
 const int ALL_OK          = 2;
 const int TEST            = 3;
@@ -24,7 +26,7 @@ class Information {
 }
 
 
-Information inforDecode(List<int> res, Information preInfor)
+Information inforDecode(List<int> res, Information preInfor, FlutterLocalNotificationsPlugin notification)
 {
   String? status;
   String? checkInStatus1;
@@ -42,12 +44,45 @@ Information inforDecode(List<int> res, Information preInfor)
   {
     case HELP_ALARM:
       status = 'HELPAlarm at ${DateTime.now().toString().substring(0,19)}';
+      const AndroidNotificationDetails androidPlatformChannelSpecifics =
+      AndroidNotificationDetails('HEALTH', 'HEALTH STATUS',
+          channelDescription: 'DESCRIBE HEALTH STATUS',
+          importance: Importance.max,
+          priority: Priority.high,
+          ticker: 'ticker');
+      const NotificationDetails platformChannelSpecifics =
+      NotificationDetails(android: androidPlatformChannelSpecifics);
+      notification.show(
+          0, 'Health alert','HELPAlarm at ${DateTime.now().toString().substring(0,19)}' , platformChannelSpecifics,
+          payload: 'item x');
       break;
     case ALL_OK:
       status = 'AllOk at ${DateTime.now().toString().substring(0,19)}';
+      const AndroidNotificationDetails androidPlatformChannelSpecifics =
+      AndroidNotificationDetails('HEALTH', 'HEALTH STATUS',
+          channelDescription: 'DESCRIBE HEALTH STATUS',
+          importance: Importance.max,
+          priority: Priority.high,
+          ticker: 'ticker');
+      const NotificationDetails platformChannelSpecifics =
+      NotificationDetails(android: androidPlatformChannelSpecifics);
+      notification.show(
+          0, 'Health alert','AllOk at ${DateTime.now().toString().substring(0,19)}' , platformChannelSpecifics,
+          payload: 'item x');
       break;
     case TEST:
       status = 'Test at ${DateTime.now().toString().substring(0,19)}';
+      const AndroidNotificationDetails androidPlatformChannelSpecifics =
+      AndroidNotificationDetails('HEALTH', 'HEALTH STATUS',
+          channelDescription: 'DESCRIBE HEALTH STATUS',
+          importance: Importance.max,
+          priority: Priority.high,
+          ticker: 'ticker');
+      const NotificationDetails platformChannelSpecifics =
+      NotificationDetails(android: androidPlatformChannelSpecifics);
+      notification.show(
+          0, 'Health alert','Test at ${DateTime.now().toString().substring(0,19)}' , platformChannelSpecifics,
+          payload: 'item x');
       break;
     case CHECK_IN_1_DONE:
       checkInStatus1 = 'Checkin1 done at ${DateTime.now().toString().substring(0,19)}';

@@ -10,6 +10,7 @@ import 'package:bloc_ble/src/ble/ble_scanner.dart';
 import 'package:bloc_ble/src/ble/handle_data.dart';
 import 'package:bloc_ble/src/get_reference.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,8 +23,8 @@ class DeviceInformation extends StatelessWidget{
   @override
   Widget build(BuildContext context)
   {
-    return Consumer4<BleAction,ConnectionStateUpdate,SharedPreferences,FlutterReactiveBle>(
-        builder: (_,action,connectionState,prefs,ble,child)=> _WatchMonitor(
+    return Consumer5<BleAction,ConnectionStateUpdate,SharedPreferences,FlutterReactiveBle,FlutterLocalNotificationsPlugin>(
+        builder: (_,action,connectionState,prefs,ble,notification,child)=> _WatchMonitor(
             logger:action.logger,
             scanner: action.scanner,
             connector: action.connector,
@@ -31,13 +32,13 @@ class DeviceInformation extends StatelessWidget{
             connectionState: connectionState,
             prefs: prefs,
             ble:ble,
-
+            notification:notification,
           ));
   }
 }
 
 class _WatchMonitor extends StatefulWidget{
-  const _WatchMonitor({required this.connector,required this.device,required this.connectionState,required this.prefs,required this.ble,required this.scanner,required this.logger});
+  const _WatchMonitor({required this.connector,required this.device,required this.connectionState,required this.prefs,required this.ble,required this.scanner,required this.logger,required this.notification});
   final BleLogger logger;
   final ConnectionStateUpdate connectionState;
   final DiscoveredDevice device;
@@ -45,7 +46,7 @@ class _WatchMonitor extends StatefulWidget{
   final FlutterReactiveBle ble;
   final SharedPreferences prefs;
   final BleScanner scanner;
-
+  final FlutterLocalNotificationsPlugin notification;
   @override
   State<_WatchMonitor> createState() => _WatchMonitorState();
 }
@@ -56,7 +57,7 @@ class _WatchMonitorState extends State<_WatchMonitor> {
   late Information information  ;
   bool isConnected = true;
   StreamSubscription<List<int>>? _subscriptionCharacteristic ;
-
+  bool isReady = false;
   @override
   void initState() {
     information =getStatus(widget.prefs);
@@ -77,23 +78,24 @@ class _WatchMonitorState extends State<_WatchMonitor> {
         }
       else
         {
-          if(widget.connectionState.connectionState==DeviceConnectionState.connected)
+          if(_subscriptionCharacteristic==null)
             {
-
+              isReady = true;
+              setState(() {});
               _subscriptionCharacteristic ??= widget.ble.subscribeToCharacteristic(readChracteristic(widget.device.id)).listen((event) {
                 widget.logger.addLooger(event.toString());
                 if(event[1]==18)
-                  {
-                    set_time.setTime(widget.ble, writeChracteristic(widget.device.id));
-                  }
+                {
+                  set_time.setTime(widget.ble, writeChracteristic(widget.device.id));
+                }
                 if(mounted)
-                  {
-                    setState(() {
-                      characteristicValue = event;
-                      information = inforDecode(event, information);
-                      setStatus(widget.prefs, information);
-                    });
-                  }
+                {
+                  setState(() {
+                    characteristicValue = event;
+                    information = inforDecode(event, information, widget.notification);
+                    setStatus(widget.prefs, information);
+                  });
+                }
               });
             }
 
@@ -114,7 +116,7 @@ class _WatchMonitorState extends State<_WatchMonitor> {
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text('Connection status: ${widget.connectionState.connectionState!=DeviceConnectionState.connected?'Connecting':'Connected'}'),
-                                  ElevatedButton(onPressed:(widget.connectionState.connectionState== DeviceConnectionState.connected)? ()  {
+                                  ElevatedButton(onPressed:(widget.connectionState.connectionState== DeviceConnectionState.connected)? () async {
                                     widget.connector.removeConnection(widget.device.id);
                                     removeAll(widget.prefs);
                                     widget.scanner.clearState();
@@ -146,6 +148,21 @@ class _WatchMonitorState extends State<_WatchMonitor> {
                                 Navigator.push(context, MaterialPageRoute(builder: (context) => const LogPage()));
                               },
                               child: const Text("Logger")),
+                          ElevatedButton(
+                              onPressed: () async{
+                                const AndroidNotificationDetails androidPlatformChannelSpecifics =
+                                AndroidNotificationDetails('your channel id', 'your channel name',
+                                    channelDescription: 'your channel description',
+                                    importance: Importance.max,
+                                    priority: Priority.high,
+                                    ticker: 'ticker');
+                                const NotificationDetails platformChannelSpecifics =
+                                NotificationDetails(android: androidPlatformChannelSpecifics);
+                                await widget.notification.show(
+                                    0, 'Health alert', widget.connectionState.connectionState.toString(), platformChannelSpecifics,
+                                    payload: 'item x');
+                              },
+                              child: const Text("Show notification")),
                           SetTimeCheck(checkIn1State: information.checkInStatus1,checkIn2State: information.checkInStatus2,ble: widget.ble,characteristic:  writeChracteristic(widget.device.id),prefs: widget.prefs,),
                           // StreamBuilder(
                           //     stream: widget.ble.connectedDeviceStream,
@@ -156,8 +173,7 @@ class _WatchMonitorState extends State<_WatchMonitor> {
               ),
         ),
         onWillPop: () async {
-          _subscriptionCharacteristic?.cancel();
-          return true;
+          return false;
         });
   }
 }

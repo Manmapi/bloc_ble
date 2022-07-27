@@ -8,6 +8,7 @@ import 'package:bloc_ble/src/ble/ble_logger.dart';
 import 'package:bloc_ble/src/ble/ble_scanner.dart';
 import 'package:bloc_ble/src/ble/ble_status.dart';
 import 'package:bloc_ble/src/get_reference.dart';
+import 'package:bloc_ble/src/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -18,10 +19,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await Permission.bluetooth.request();
   await Permission.location.request();
   await Permission.bluetoothConnect.request();
   await Permission.bluetoothScan.request();
+  final notification = NotificationService();
+  await notification.init();
   final ble = FlutterReactiveBle();
   final bleStatus = BleStatusMonitor(ble);
   final bleScanner = BleScanner(ble: ble);
@@ -32,6 +36,7 @@ void main() async {
   final bleAction = BleAction(connector: connector, scanner: bleScanner, interactor: interactor, logger: logger);
 
   runApp(MultiProvider(providers: [
+    Provider.value(value: notification.flutterLocalNotificationsPlugin),
     Provider.value(value: bleAction),
     Provider.value(value: logger),
     Provider.value(value: ble),

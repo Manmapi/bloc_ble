@@ -60,6 +60,5 @@ class BleConnector{
        connectionState: DeviceConnectionState.disconnected,
        failure: null,));
     }
-    await _connection.cancel();
   }
 }
