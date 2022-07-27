@@ -1,4 +1,12 @@
-
+const int HELP_ALARM      = 1;
+const int ALL_OK          = 2;
+const int TEST            = 3;
+const int BATTERY_LOW     = 5;
+const int BATTERY_OK      = 6;
+const int CHECK_IN_1_DONE = 14;
+const int CHECK_IN_2_DONE = 15;
+const int CHECK_IN_1_FAIL = 16;
+const int CHECK_IN_2_FAIL = 17;
 
 
 
@@ -32,25 +40,25 @@ Information inforDecode(List<int> res, Information preInfor)
     }
   switch(res[1])
   {
-    case 1:
+    case HELP_ALARM:
       status = 'HELPAlarm at ${DateTime.now().toString().substring(0,19)}';
       break;
-    case 2:
+    case ALL_OK:
       status = 'AllOk at ${DateTime.now().toString().substring(0,19)}';
       break;
-    case 3:
+    case TEST:
       status = 'Test at ${DateTime.now().toString().substring(0,19)}';
       break;
-    case 14:
+    case CHECK_IN_1_DONE:
       checkInStatus1 = 'Checkin1 done at ${DateTime.now().toString().substring(0,19)}';
       break;
-    case 15:
+    case CHECK_IN_2_DONE:
       checkInStatus2 = 'Checkin2 done at ${DateTime.now().toString().substring(0,19)}';
       break;
-    case 16:
+    case CHECK_IN_1_FAIL:
       checkInStatus1 = 'Checkin1 fail at ${DateTime.now().toString().substring(0,19)}';
       break;
-    case 17:
+    case CHECK_IN_2_FAIL:
       checkInStatus2 = 'Checkin2 fail at ${DateTime.now().toString().substring(0,19)}';
       break;
   }

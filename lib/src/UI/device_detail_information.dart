@@ -1,5 +1,5 @@
 import 'dart:async';
-
+import 'package:bloc_ble/src/ble/characteristic.dart';
 import 'package:bloc_ble/src/UI/log_page.dart';
 import 'package:bloc_ble/src/UI/search_for_device.dart';
 import 'package:bloc_ble/src/Widget/time_set_widget.dart';
@@ -14,9 +14,10 @@ import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:bloc_ble/src/ble/set_time.dart' as set_time;
+
+
 class DeviceInformation extends StatelessWidget{
   const DeviceInformation({ Key? key,required this.device}):super(key: key);
-
   final DiscoveredDevice  device;
   @override
   Widget build(BuildContext context)
@@ -50,15 +51,20 @@ class _WatchMonitor extends StatefulWidget{
 }
 
 class _WatchMonitorState extends State<_WatchMonitor> {
+
   List<int> characteristicValue = <int>[-1,-1];
-  Information information =const Information(status: 'Waiting...', checkInStatus1: null, checkInStatus2: null, batteryStatus: true);
+  late Information information  ;
   bool isConnected = true;
   StreamSubscription<List<int>>? _subscriptionCharacteristic ;
 
   @override
+  void initState() {
+    information =getStatus(widget.prefs);
+    super.initState();
+  }
+  @override
   Widget build(BuildContext context)
   {
-
     Timer(const Duration(seconds: 5),() async {
       if(widget.connectionState.connectionState!=DeviceConnectionState.connected)
         {
@@ -74,18 +80,18 @@ class _WatchMonitorState extends State<_WatchMonitor> {
           if(widget.connectionState.connectionState==DeviceConnectionState.connected)
             {
 
-              _subscriptionCharacteristic ??= widget.ble.subscribeToCharacteristic(QualifiedCharacteristic(characteristicId: Uuid.parse('50db1524-418d-4690-9589-ab7be9e22684') , serviceId: Uuid.parse('50bd152a-418d-4690-9589-ab7be9e22684'), deviceId: widget.device.id)).listen((event) {
+              _subscriptionCharacteristic ??= widget.ble.subscribeToCharacteristic(readChracteristic(widget.device.id)).listen((event) {
                 widget.logger.addLooger(event.toString());
                 if(event[1]==18)
                   {
-                    set_time.setTime(widget.ble, QualifiedCharacteristic(characteristicId: Uuid.parse('50db1527-418d-4690-9589-ab7be9e22684') , serviceId: Uuid.parse('50bd152a-418d-4690-9589-ab7be9e22684'), deviceId: widget.device.id));
+                    set_time.setTime(widget.ble, writeChracteristic(widget.device.id));
                   }
                 if(mounted)
                   {
                     setState(() {
                       characteristicValue = event;
                       information = inforDecode(event, information);
-                      print(information.toString());
+                      setStatus(widget.prefs, information);
                     });
                   }
               });
@@ -110,7 +116,7 @@ class _WatchMonitorState extends State<_WatchMonitor> {
                                   Text('Connection status: ${widget.connectionState.connectionState!=DeviceConnectionState.connected?'Connecting':'Connected'}'),
                                   ElevatedButton(onPressed:(widget.connectionState.connectionState== DeviceConnectionState.connected)? ()  {
                                     widget.connector.removeConnection(widget.device.id);
-                                    removeDevice(widget.prefs);
+                                    removeAll(widget.prefs);
                                     widget.scanner.clearState();
                                     Navigator.pushReplacement(context,MaterialPageRoute(builder: (context) =>const SearchPage()));
                                   }:null, child: const Icon(Icons.bluetooth_disabled)),
@@ -136,18 +142,21 @@ class _WatchMonitorState extends State<_WatchMonitor> {
                             ),
                           Text(characteristicValue.toString()),
                           ElevatedButton(
-                              onPressed: (){
+                              onPressed: ()  {
                                 Navigator.push(context, MaterialPageRoute(builder: (context) => const LogPage()));
                               },
                               child: const Text("Logger")),
-                          SetTimeCheck(checkIn1State: information.checkInStatus1,checkIn2State: information.checkInStatus2,ble: widget.ble,characteristic:  QualifiedCharacteristic(characteristicId: Uuid.parse('50db1527-418d-4690-9589-ab7be9e22684') , serviceId: Uuid.parse('50bd152a-418d-4690-9589-ab7be9e22684'), deviceId: widget.device.id),),
+                          SetTimeCheck(checkIn1State: information.checkInStatus1,checkIn2State: information.checkInStatus2,ble: widget.ble,characteristic:  writeChracteristic(widget.device.id),prefs: widget.prefs,),
+                          // StreamBuilder(
+                          //     stream: widget.ble.connectedDeviceStream,
+                          //     builder: (_,snapshot)=>Text(snapshot.toString()))
                         ]),
                   ),
                 ),
               ),
         ),
         onWillPop: () async {
-          await widget.connector.removeConnection(widget.connectionState.deviceId);
+          _subscriptionCharacteristic?.cancel();
           return true;
         });
   }

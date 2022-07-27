@@ -8,11 +8,8 @@ class BleLogger {
     void addLooger(String message)
     {
       _logger.add('${DateTime.now().toString().substring(0,19)}  $message');
-      _loggerController.sink.add(logger);
-
+      _loggerController.sink.add(_logger);
     }
-
-    List<String> get logger => _logger;
 
     //Logger stream
 

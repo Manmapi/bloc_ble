@@ -28,13 +28,3 @@ class _LogPageState extends State<LogPage> {
     );
   }
 }
-// class _LogPage extends StatelessWidget{
-//   final List<String> loggerState;
-//
-//   const _LogPage({required this.loggerState});
-//   @override
-//   Widget build(BuildContext context){
-//     print('rebuild');
-//     return
-//   }
-// }

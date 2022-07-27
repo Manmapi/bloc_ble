@@ -1,6 +1,8 @@
+import 'package:bloc_ble/src/get_reference.dart';
 import 'package:flutter/material.dart';
 import 'package:bloc_ble/src/ble/set_time.dart' as set_time;
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SetTimeCheck extends StatefulWidget
 {
@@ -8,16 +10,32 @@ class SetTimeCheck extends StatefulWidget
   final String? checkIn2State;
   final FlutterReactiveBle ble;
   final QualifiedCharacteristic characteristic;
-  const SetTimeCheck({Key? key,required this.ble,required this.characteristic,required this.checkIn1State, required this.checkIn2State}):super(key: key);
+  final SharedPreferences prefs;
+
+  const SetTimeCheck({Key? key,required this.ble,required this.characteristic,required this.checkIn1State, required this.checkIn2State,required this.prefs}):super(key: key);
   @override
   State<SetTimeCheck> createState() => _SetTimeCheckState();
 }
 
 class _SetTimeCheckState extends State<SetTimeCheck> {
-  bool isCheckIn1 = false;
-  bool isCheckIn2 = false;
-  TimeOfDay time1 = const TimeOfDay(hour: 12, minute: 00);
-  TimeOfDay time2 = const TimeOfDay(hour: 12, minute: 00);
+  late CheckInData checkIn1Data;
+  late CheckInData checkIn2Data;
+
+  @override
+  void initState() {
+    checkIn1Data = getCheckIn1(widget.prefs);
+    checkIn2Data = getCheckIn2(widget.prefs);
+    isCheckIn1 = checkIn1Data.isOn;
+    isCheckIn2 = checkIn2Data.isOn;
+    time1 =checkIn1Data.time;
+    time2 =checkIn2Data.time;
+    super.initState();
+  }
+
+  late bool isCheckIn1;
+  late bool isCheckIn2;
+  late TimeOfDay time1 ;
+  late TimeOfDay time2 ;
 
   String time2String (TimeOfDay time)
   {
@@ -28,6 +46,7 @@ class _SetTimeCheckState extends State<SetTimeCheck> {
 
   @override
   Widget build(BuildContext context) {
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -47,6 +66,7 @@ class _SetTimeCheckState extends State<SetTimeCheck> {
                       {
                         setState((){
                           time1 = time;
+                          setCheckIn1(widget.prefs, time1, isCheckIn1);
                         });
                         if(isCheckIn1)
                         {
@@ -60,6 +80,7 @@ class _SetTimeCheckState extends State<SetTimeCheck> {
                     onChanged: (value) {
                       setState(() {
                         isCheckIn1 = value;
+                        setCheckIn1(widget.prefs, time1, isCheckIn1);
                       });
                       if(isCheckIn1)
                       {
@@ -95,6 +116,7 @@ class _SetTimeCheckState extends State<SetTimeCheck> {
                         {
                           setState((){
                             time2 = time;
+                            setCheckIn2(widget.prefs, time2, isCheckIn2);
                           });
                           if(isCheckIn2)
                           {
@@ -108,6 +130,7 @@ class _SetTimeCheckState extends State<SetTimeCheck> {
                       onChanged: (value) {
                         setState(() {
                           isCheckIn2 = value;
+                          setCheckIn2(widget.prefs, time2, isCheckIn2);
                         });
                         if(isCheckIn2)
                         {

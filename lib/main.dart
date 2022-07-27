@@ -22,7 +22,6 @@ void main() async {
   await Permission.location.request();
   await Permission.bluetoothConnect.request();
   await Permission.bluetoothScan.request();
-
   final ble = FlutterReactiveBle();
   final bleStatus = BleStatusMonitor(ble);
   final bleScanner = BleScanner(ble: ble);
@@ -39,7 +38,7 @@ void main() async {
     Provider.value(value: prefs),
     StreamProvider<List<String>>(create: (_) => bleAction.logger.loggerState , initialData: const <String>[]),
     StreamProvider<List<DiscoveredService>>(create: (_) => bleAction.interactor.serviceState, initialData:const <DiscoveredService>[]),
-    StreamProvider<ConnectionStateUpdate>(create: (_) => bleAction.connector.state, initialData: const ConnectionStateUpdate(
+    StreamProvider<ConnectionStateUpdate>(create: (_) => ble.connectedDeviceStream, initialData: const ConnectionStateUpdate(
       deviceId: '',
       connectionState: DeviceConnectionState.disconnected,
       failure: null,
