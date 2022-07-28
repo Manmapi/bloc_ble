@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:bloc_ble/src/get_reference.dart';
+import 'package:bloc_ble/src/preference/time_prefs.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -51,7 +51,7 @@ class BleConnector{
 
   removeConnection(id) async {
     try{
-      print("cancel connection");
+
       _connection.cancel();
     } catch (e){ 
       throw 'Error disconnection from a device: $e';

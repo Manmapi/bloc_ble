@@ -7,7 +7,7 @@ import 'package:bloc_ble/src/ble/ble_device_interaction.dart';
 import 'package:bloc_ble/src/ble/ble_logger.dart';
 import 'package:bloc_ble/src/ble/ble_scanner.dart';
 import 'package:bloc_ble/src/ble/ble_status.dart';
-import 'package:bloc_ble/src/get_reference.dart';
+import 'package:bloc_ble/src/preference/time_prefs.dart';
 import 'package:bloc_ble/src/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';

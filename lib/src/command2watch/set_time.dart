@@ -6,7 +6,8 @@ const List<int> TURN_OFF_CHECKIN_1 = [0x00,0x07,0x06];
 const List<int> TURN_ON_CHECKIN_1 = [0x00,0x05,0x06];
 const List<int> TURN_OFF_CHECKIN_2 = [0x00,0x08,0x06];
 const List<int> TURN_ON_CHECKIN_2 = [0x00,0x06,0x06];
-
+const List<int> CHECK_IN_1_DONE = [0x00,0x09,0x06];
+const List<int> CHECK_IN_2_DONE = [0x00,0x0A,0x06];
 List<int> setHour(int hour)
 {
   return [hour,0x01,0x07];
@@ -90,4 +91,12 @@ void turnOffCheckin1(FlutterReactiveBle ble,QualifiedCharacteristic characterist
 }
 void turnOffCheckin2(FlutterReactiveBle ble,QualifiedCharacteristic characteristic) async {
   await ble.writeCharacteristicWithoutResponse(characteristic, value: TURN_OFF_CHECKIN_2);
+}
+
+void checkIn1Success(FlutterReactiveBle ble, QualifiedCharacteristic characteristic) async {
+  await ble.writeCharacteristicWithoutResponse(characteristic, value: CHECK_IN_1_DONE);
+}
+
+void checkIn2Success(FlutterReactiveBle ble, QualifiedCharacteristic characteristic) async {
+  await ble.writeCharacteristicWithoutResponse(characteristic, value: CHECK_IN_2_DONE);
 }

@@ -1,6 +1,8 @@
-import 'package:bloc_ble/src/get_reference.dart';
+import 'dart:async';
+
+import 'package:bloc_ble/src/preference/time_prefs.dart';
 import 'package:flutter/material.dart';
-import 'package:bloc_ble/src/ble/set_time.dart' as set_time;
+import 'package:bloc_ble/src/command2watch/set_time.dart' as set_time;
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -20,7 +22,11 @@ class SetTimeCheck extends StatefulWidget
 class _SetTimeCheckState extends State<SetTimeCheck> {
   late CheckInData checkIn1Data;
   late CheckInData checkIn2Data;
-
+  late bool isCheckIn1;
+  late bool isCheckIn2;
+  late TimeOfDay time1;
+  late TimeOfDay time2;
+  late Timer timer;
   @override
   void initState() {
     checkIn1Data = getCheckIn1(widget.prefs);
@@ -29,13 +35,22 @@ class _SetTimeCheckState extends State<SetTimeCheck> {
     isCheckIn2 = checkIn2Data.isOn;
     time1 =checkIn1Data.time;
     time2 =checkIn2Data.time;
+    timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if(mounted)
+        {
+          setState(() {
+          });
+        }
+
+    });
     super.initState();
   }
-
-  late bool isCheckIn1;
-  late bool isCheckIn2;
-  late TimeOfDay time1 ;
-  late TimeOfDay time2 ;
+  @override
+  void dispose()
+  {
+    timer.cancel();
+    super.dispose();
+  }
 
   String time2String (TimeOfDay time)
   {
@@ -46,13 +61,12 @@ class _SetTimeCheckState extends State<SetTimeCheck> {
 
   @override
   Widget build(BuildContext context) {
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
             padding:const EdgeInsets.symmetric(vertical: 10,horizontal: 0),
-            width: 200,
+            width: double.infinity,
             child: Column(
             children: [
               Row(
@@ -91,6 +105,12 @@ class _SetTimeCheckState extends State<SetTimeCheck> {
                       }
                     },
                     activeColor: Colors.greenAccent[200],
+                  ),
+                  ElevatedButton(
+                      onPressed: (isCheckIn1&&(DateTime.now().hour==time1.hour)&&(DateTime.now().minute-time1.minute>=0)&&(DateTime.now().minute-time1.minute<3))? (){
+                        set_time.checkIn1Success(widget.ble, widget.characteristic);
+                      }:null,
+                      child: const Text("Check in"),
                   )
                 ],
               ),
@@ -102,7 +122,7 @@ class _SetTimeCheckState extends State<SetTimeCheck> {
         ),
         Container(
             padding:const EdgeInsets.symmetric(vertical: 10,horizontal: 0),
-            width: 200,
+            width: double.infinity,
             child: Column(
               children: [
                 Row(
@@ -141,6 +161,12 @@ class _SetTimeCheckState extends State<SetTimeCheck> {
                         }
                       },
                       activeColor: Colors.greenAccent[200],
+                    ),
+                    ElevatedButton(
+                      onPressed:(isCheckIn2&&(DateTime.now().hour==time2.hour)&&(DateTime.now().minute-time2.minute>=0)&&(DateTime.now().minute-time2.minute<3))?(){
+                        set_time.checkIn2Success(widget.ble, widget.characteristic);
+                      }:null,
+                      child: const Text("Check in"),
                     )
                   ],
                 ),
