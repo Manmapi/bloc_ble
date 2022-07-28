@@ -30,10 +30,10 @@ void main() async {
   final bleStatus = BleStatusMonitor(ble);
   final bleScanner = BleScanner(ble: ble);
   final connector = BleConnector(ble: ble);
-  final interactor = BleInteraction(ble: ble);
+  final interact = BleInteraction(ble: ble);
   final  prefs = await SharedPreferences.getInstance();
   final logger = BleLogger();
-  final bleAction = BleAction(connector: connector, scanner: bleScanner, interactor: interactor, logger: logger);
+  final bleAction = BleAction(connector: connector, scanner: bleScanner, interactor: interact, logger: logger);
 
   runApp(MultiProvider(providers: [
     Provider.value(value: notification.flutterLocalNotificationsPlugin),

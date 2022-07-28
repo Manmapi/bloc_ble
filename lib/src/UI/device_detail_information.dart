@@ -23,22 +23,29 @@ class DeviceInformation extends StatelessWidget{
   @override
   Widget build(BuildContext context)
   {
-    return Consumer5<BleAction,ConnectionStateUpdate,SharedPreferences,FlutterReactiveBle,FlutterLocalNotificationsPlugin>(
-        builder: (_,action,connectionState,prefs,ble,notification,child)=> _WatchMonitor(
-            logger:action.logger,
-            scanner: action.scanner,
-            connector: action.connector,
-            device:device,
-            connectionState: connectionState,
-            prefs: prefs,
-            ble:ble,
-            notification:notification,
-          ));
+    return Consumer6<BleAction,ConnectionStateUpdate,SharedPreferences,FlutterReactiveBle,FlutterLocalNotificationsPlugin,List<String>>(
+        builder: (_,action,connectionState,prefs,ble,notification,logState,child)
+            {
+              final BleStatus bleStatus = Provider.of<BleStatus>(context);
+              return _WatchMonitor(
+                logger:action.logger,
+                scanner: action.scanner,
+                connector: action.connector,
+                device:device,
+                connectionState: connectionState,
+                prefs: prefs,
+                ble:ble,
+                notification:notification,
+                logstate:logState,
+                bleStatus: bleStatus,
+              );
+            }
+            );
   }
 }
 
 class _WatchMonitor extends StatefulWidget{
-  const _WatchMonitor({required this.connector,required this.device,required this.connectionState,required this.prefs,required this.ble,required this.scanner,required this.logger,required this.notification});
+  const _WatchMonitor({required this.bleStatus,required this.logstate,required this.connector,required this.device,required this.connectionState,required this.prefs,required this.ble,required this.scanner,required this.logger,required this.notification});
   final BleLogger logger;
   final ConnectionStateUpdate connectionState;
   final DiscoveredDevice device;
@@ -47,6 +54,8 @@ class _WatchMonitor extends StatefulWidget{
   final SharedPreferences prefs;
   final BleScanner scanner;
   final FlutterLocalNotificationsPlugin notification;
+  final List<String> logstate;
+  final BleStatus bleStatus;
   @override
   State<_WatchMonitor> createState() => _WatchMonitorState();
 }
@@ -56,125 +65,140 @@ class _WatchMonitorState extends State<_WatchMonitor> {
   List<int> characteristicValue = <int>[-1,-1];
   late Information information  ;
   bool isConnected = true;
-  StreamSubscription<List<int>>? _subscriptionCharacteristic ;
+  bool isRemove = false;
+  StreamSubscription<List<int>>? _subscriptionCharacteristic;
   bool isReady = false;
   @override
   void initState() {
-    information =getStatus(widget.prefs);
+    information = getStatus(widget.prefs);
     super.initState();
   }
+
+  // @override
+  // void dispose() {
+  //   print('dispose');
+  //   super.dispose();
+  // }
   @override
   Widget build(BuildContext context)
   {
-    Timer(const Duration(seconds: 5),() async {
-      if(widget.connectionState.connectionState!=DeviceConnectionState.connected)
-        {
-          _subscriptionCharacteristic = null;
-          if(mounted)
-            {
-              setState((){});
-              widget.connector.scanAndConnect(widget.device);
+    if(widget.bleStatus == BleStatus.ready ){
+      if(!isRemove) {
+        if (widget.connectionState.connectionState!=DeviceConnectionState.connected) {
+          _subscriptionCharacteristic?.cancel();
+          widget.connector.scanAndConnect(widget.device);
+        } else {
+          _subscriptionCharacteristic ??= widget.ble.subscribeToCharacteristic(readChracteristic(widget.device.id)).listen((event) {
+            widget.logger.addLooger(event.toString());
+            if(event[1]==18) {
+              set_time.setTime(widget.ble, writeChracteristic(widget.device.id));
             }
-        }
-      else
-        {
-          if(_subscriptionCharacteristic==null)
-            {
-              isReady = true;
-              setState(() {});
-              _subscriptionCharacteristic ??= widget.ble.subscribeToCharacteristic(readChracteristic(widget.device.id)).listen((event) {
-                widget.logger.addLooger(event.toString());
-                if(event[1]==18)
-                {
-                  set_time.setTime(widget.ble, writeChracteristic(widget.device.id));
-                }
-                if(mounted)
-                {
-                  setState(() {
-                    characteristicValue = event;
-                    information = inforDecode(event, information, widget.notification);
-                    setStatus(widget.prefs, information);
-                  });
-                }
+            if(mounted) {
+              setState(() {
+                characteristicValue = event;
+                information = inforDecode(event, information, widget.notification);
+                setStatus(widget.prefs, information);
               });
             }
-
+          });
         }
-    });
-    return WillPopScope(
-        child: Scaffold(
-          body:  SafeArea(
-              child: Center(
+      }
+    }
+
+    return SafeArea(
+      child: WillPopScope(
+          child: Scaffold(
+            appBar: AppBar(
+              title: const Text('Device Information'),
+            ),
+            endDrawer: Drawer(
+              child: ListView(
+                padding: const EdgeInsets.only(top: 0),
+                children:  [
+                  const SizedBox(
+                    height: 64,
+                    child:  DrawerHeader(
+                      decoration:  BoxDecoration(
+                        color: Colors.orange,
+                      ),
+                      child: Text("Menu",style: TextStyle(fontSize: 30),textAlign: TextAlign.center,),
+                    ),
+                  ),
+                  ListTile(
+                    title: const Text("Log Page"),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const LogPage()));
+                    },
+                  ),
+                  ListTile(
+                      title: const Text('Remove device'),
+                      onTap: () async {
+                          isRemove = true;
+                          Navigator.pop(context);
+                          Navigator.pushReplacement(
+                              context, MaterialPageRoute(builder: (
+                              context) => const SearchPage()));
+                          print("go here");
+                          widget.connector.removeConnection(widget.device.id);
+                          removeAll(widget.prefs);
+                          widget.scanner.clearState();
+
+                        },
+                    ),
+                ],
+              ),
+            ),
+            body: Builder(
+              builder: (context)=>Center(
                 child: Container(
                   padding:const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                    child: Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Align(
-                              alignment: Alignment.centerRight,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text('Connection status: ${widget.connectionState.connectionState!=DeviceConnectionState.connected?'Connecting':'Connected'}'),
-                                  ElevatedButton(onPressed:(widget.connectionState.connectionState== DeviceConnectionState.connected)? () async {
-                                    widget.connector.removeConnection(widget.device.id);
-                                    removeAll(widget.prefs);
-                                    widget.scanner.clearState();
-                                    Navigator.pushReplacement(context,MaterialPageRoute(builder: (context) =>const SearchPage()));
-                                  }:null, child: const Icon(Icons.bluetooth_disabled)),
-                                ],
-                              )),
-
-                          const SizedBox(
-                            height: 50,
-                          ),
-
-                          Row(
+                  child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Align(
+                            alignment: Alignment.topLeft,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Icon(Icons. battery_4_bar,color: information.batteryStatus?Colors.greenAccent[200]:Colors.redAccent[200],size: 150 ,),
-                                Flexible(
-                                      child: Center(
-                                        child: Text("Health Status ${information.status}",
-                                          softWrap: false,
-                                          maxLines: 3,
-                                          overflow: TextOverflow.ellipsis,),
-                                      ),
-                                )
+                                (widget.bleStatus != BleStatus.ready)?const Text('Bluetooth is not on, please turn on it',style:  TextStyle(color: Colors.red),):const SizedBox.shrink(),
+                                Text('Connection status: ${widget.connectionState.connectionState!=DeviceConnectionState.connected?'Connecting':'Connected'}'),
                               ],
-                            ),
-                          Text(characteristicValue.toString()),
-                          ElevatedButton(
-                              onPressed: ()  {
-                                Navigator.push(context, MaterialPageRoute(builder: (context) => const LogPage()));
-                              },
-                              child: const Text("Logger")),
-                          ElevatedButton(
-                              onPressed: () async{
-                                const AndroidNotificationDetails androidPlatformChannelSpecifics =
-                                AndroidNotificationDetails('your channel id', 'your channel name',
-                                    channelDescription: 'your channel description',
-                                    importance: Importance.max,
-                                    priority: Priority.high,
-                                    ticker: 'ticker');
-                                const NotificationDetails platformChannelSpecifics =
-                                NotificationDetails(android: androidPlatformChannelSpecifics);
-                                await widget.notification.show(
-                                    0, 'Health alert', widget.connectionState.connectionState.toString(), platformChannelSpecifics,
-                                    payload: 'item x');
-                              },
-                              child: const Text("Show notification")),
-                          SetTimeCheck(checkIn1State: information.checkInStatus1,checkIn2State: information.checkInStatus2,ble: widget.ble,characteristic:  writeChracteristic(widget.device.id),prefs: widget.prefs,),
-                          // StreamBuilder(
-                          //     stream: widget.ble.connectedDeviceStream,
-                          //     builder: (_,snapshot)=>Text(snapshot.toString()))
-                        ]),
-                  ),
+                            )),
+
+                        const SizedBox(
+                          height: 50,
+                        ),
+
+                        Row(
+                          children: [
+                            Icon(Icons. battery_4_bar,color: information.batteryStatus?Colors.greenAccent[200]:Colors.redAccent[200],size: 150 ,),
+                            Flexible(
+                              child: Center(
+                                child: Text("Health Status ${information.status}",
+                                  softWrap: false,
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,),
+                              ),
+                            )
+                          ],
+                        ),
+                        Text(characteristicValue.toString()),
+                        SetTimeCheck(checkIn1State: information.checkInStatus1,checkIn2State: information.checkInStatus2,ble: widget.ble,characteristic:  writeChracteristic(widget.device.id),prefs: widget.prefs,),
+                        Flexible(child: (widget.logstate.isNotEmpty)?ListView.builder(
+                            itemCount: widget.logstate.length,
+                            itemBuilder: (_,index)=> Text(widget.logstate[index])
+                        ):const SizedBox.shrink(),)
+
+                      ]),
                 ),
               ),
-        ),
-        onWillPop: () async {
-          return false;
-        });
+            )
+                ),
+          onWillPop: () async {
+            return false;
+          }),
+    );
   }
 }
 

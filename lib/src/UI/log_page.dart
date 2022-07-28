@@ -14,17 +14,30 @@ class _LogPageState extends State<LogPage> {
   Widget build(BuildContext context)
   {
     return Consumer<List<String>>(
-        builder: (_,loggerState,__) =>
-        Scaffold(
-          body: SafeArea(
-            child: Center(
-              child:(loggerState.isNotEmpty)?ListView.builder(
-                  itemCount: loggerState.length,
-                  itemBuilder: (_,index)=> Text(loggerState[index])
-              ):null,
+            builder: (_,loggerState,__) =>Scaffold(
+            body: SafeArea(
+              child: GestureDetector(
+                onVerticalDragUpdate: (detail){
+                  print(detail);
+                },
+                child: Center(
+                  child:Column(
+                    children: [
+                      ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          child: const Text("Back to main")),
+                      Flexible(child:(loggerState.isNotEmpty)?ListView.builder(
+                          itemCount: loggerState.length,
+                          itemBuilder: (_,index)=> Text(loggerState[index])
+                      ):const SizedBox.shrink(), ),
+                    ]
+                  ),
+                ),
+              ),
             ),
           ),
-        )
-    );
+        );
   }
 }

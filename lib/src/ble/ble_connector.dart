@@ -51,6 +51,7 @@ class BleConnector{
 
   removeConnection(id) async {
     try{
+      print("cancel connection");
       _connection.cancel();
     } catch (e){ 
       throw 'Error disconnection from a device: $e';
