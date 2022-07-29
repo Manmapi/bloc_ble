@@ -1,10 +1,13 @@
-import 'package:bloc_ble/src/preference/fall_detect_prefs.dart';
+import 'package:bloc_ble/src/ble/characteristic.dart';
+import 'package:bloc_ble/src/preference/impact_detect_prefs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:bloc_ble/src/command2watch/set_impact.dart' as set_impact;
 class FallDetect extends StatelessWidget{
+  final DiscoveredDevice device;
+  const FallDetect({Key? key,required this.device}):super(key: key);
   @override
   Widget build(BuildContext context)
   {
@@ -12,13 +15,17 @@ class FallDetect extends StatelessWidget{
         builder:(_,ble,connectionState,prefs,__) => _FallDetectPage(
             connectionState:connectionState,
             prefs:prefs,
+            device: device,
+            ble: ble,
         ));
   }
 }
 class _FallDetectPage extends StatefulWidget{
+  final DiscoveredDevice device;
   final ConnectionStateUpdate connectionState;
   final SharedPreferences prefs;
-  const _FallDetectPage({required this.connectionState,required this.prefs});
+  final FlutterReactiveBle ble;
+  const _FallDetectPage({required this.connectionState,required this.prefs,required this.device,required this.ble});
   @override
   State<_FallDetectPage> createState() => _FallDetectPageState();
 }
@@ -53,6 +60,11 @@ class _FallDetectPageState extends State<_FallDetectPage>{
                       setState((){
                         impactDetectEnable = value;
                         setImpactDetectSetting(widget.prefs, ImpactDetectSetting(gValue: gValue, impactDetectEnable: impactDetectEnable));
+                        if(impactDetectEnable) {
+                          set_impact.enableImpactAlert(widget.ble,writeChracteristic(widget.device.id),gValue.toInt());
+                        } else {
+                          set_impact.disableImpactAlert(widget.ble, writeChracteristic(widget.device.id));
+                        }
                       });
                     },
                 ),
@@ -68,6 +80,10 @@ class _FallDetectPageState extends State<_FallDetectPage>{
                     setState(() {
                       gValue = value;
                       setImpactDetectSetting(widget.prefs, ImpactDetectSetting(gValue: gValue, impactDetectEnable: impactDetectEnable));
+                      if(impactDetectEnable)
+                        {
+                          set_impact.enableImpactAlert(widget.ble,writeChracteristic(widget.device.id),gValue.toInt());
+                        }
                     });
                   },
                   label: '$gValue',

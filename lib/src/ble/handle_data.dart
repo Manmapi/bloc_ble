@@ -5,11 +5,12 @@ const int ALL_OK          = 2;
 const int TEST            = 3;
 const int BATTERY_LOW     = 5;
 const int BATTERY_OK      = 6;
+const int IMPACT_DETECT   = 12;
+const int IMPACT_ALERT    = 13;
 const int CHECK_IN_1_DONE = 14;
 const int CHECK_IN_2_DONE = 15;
 const int CHECK_IN_1_FAIL = 16;
 const int CHECK_IN_2_FAIL = 17;
-
 
 
 class Information {
@@ -53,7 +54,7 @@ Information inforDecode(List<int> res, Information preInfor, FlutterLocalNotific
       const NotificationDetails platformChannelSpecifics =
       NotificationDetails(android: androidPlatformChannelSpecifics);
       notification.show(
-          0, 'Health alert','HELPAlarm at ${DateTime.now().toString().substring(0,19)}' , platformChannelSpecifics,
+          0, 'Health alert',status , platformChannelSpecifics,
           payload: 'item x');
       break;
     case ALL_OK:
@@ -67,7 +68,7 @@ Information inforDecode(List<int> res, Information preInfor, FlutterLocalNotific
       const NotificationDetails platformChannelSpecifics =
       NotificationDetails(android: androidPlatformChannelSpecifics);
       notification.show(
-          0, 'Health alert','AllOk at ${DateTime.now().toString().substring(0,19)}' , platformChannelSpecifics,
+          0, 'Health alert',status, platformChannelSpecifics,
           payload: 'item x');
       break;
     case TEST:
@@ -81,7 +82,35 @@ Information inforDecode(List<int> res, Information preInfor, FlutterLocalNotific
       const NotificationDetails platformChannelSpecifics =
       NotificationDetails(android: androidPlatformChannelSpecifics);
       notification.show(
-          0, 'Health alert','Test at ${DateTime.now().toString().substring(0,19)}' , platformChannelSpecifics,
+          0, 'Health alert',status , platformChannelSpecifics,
+          payload: 'item x');
+      break;
+    case IMPACT_ALERT:
+      status = 'Impact alert at ${DateTime.now().toString().substring(0,19)}';
+      const AndroidNotificationDetails androidPlatformChannelSpecifics =
+      AndroidNotificationDetails('HEALTH', 'HEALTH STATUS',
+          channelDescription: 'DESCRIBE HEALTH STATUS',
+          importance: Importance.max,
+          priority: Priority.high,
+          ticker: 'ticker');
+      const NotificationDetails platformChannelSpecifics =
+      NotificationDetails(android: androidPlatformChannelSpecifics);
+      notification.show(
+          0, 'Health alert',status, platformChannelSpecifics,
+          payload: 'item x');
+      break;
+    case IMPACT_DETECT:
+      status = 'Impact detect at ${DateTime.now().toString().substring(0,19)}';
+      const AndroidNotificationDetails androidPlatformChannelSpecifics =
+      AndroidNotificationDetails('HEALTH', 'HEALTH STATUS',
+          channelDescription: 'DESCRIBE HEALTH STATUS',
+          importance: Importance.max,
+          priority: Priority.high,
+          ticker: 'ticker');
+      const NotificationDetails platformChannelSpecifics =
+      NotificationDetails(android: androidPlatformChannelSpecifics);
+      notification.show(
+          0, 'Health alert',status, platformChannelSpecifics,
           payload: 'item x');
       break;
     case CHECK_IN_1_DONE:

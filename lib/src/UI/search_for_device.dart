@@ -43,14 +43,21 @@ class _SearchForDevice extends StatefulWidget{
 class _SearchForDeviceState extends State<_SearchForDevice> {
   bool isScanning = false;
   _startScanning() async {
+    if(mounted){
+      setState((){
+        isScanning = true;
+      });
+    }
     widget.startScan([Uuid.parse('50db152A-418d-4690-9589-ab7be9e22684')]);
     Timer(const Duration(seconds: 5),() {
       widget.stopScan();
+      if(mounted) {
+          setState((){
+            isScanning = false;
+          });
+        }
     });
   }
-
-
-
   @override
   Widget build(BuildContext context){
     return  Scaffold(
@@ -91,10 +98,10 @@ class _SearchForDeviceState extends State<_SearchForDevice> {
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
         width: double.infinity,
         child: FloatingActionButton.extended(
-          label:widget.status.scanIsInProgress?const CircularProgressIndicator():const Text("Find watch"),
+          label:isScanning?const CircularProgressIndicator():const Text("Find watch"),
           hoverColor: Colors.grey,
-          backgroundColor:widget.status.scanIsInProgress?Colors.grey:Colors.blue ,
-          onPressed: widget.status.scanIsInProgress? null :() {_startScanning();},
+          backgroundColor:isScanning?Colors.grey:Colors.blue ,
+          onPressed: isScanning? null :() {_startScanning();},
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,

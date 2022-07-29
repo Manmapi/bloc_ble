@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:bloc_ble/main.dart';
 import 'package:bloc_ble/src/UI/fall_detect.dart';
+import 'package:bloc_ble/src/UI/sleep_reset_page.dart';
+import 'package:bloc_ble/src/UI/tracking_heartbeat.dart';
 import 'package:bloc_ble/src/ble/characteristic.dart';
 import 'package:bloc_ble/src/UI/log_page.dart';
 import 'package:bloc_ble/src/Widget/time_set_widget.dart';
@@ -16,7 +18,6 @@ import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:bloc_ble/src/command2watch/set_time.dart' as set_time;
-
 
 class DeviceInformation extends StatelessWidget{
   const DeviceInformation({ Key? key,required this.device}):super(key: key);
@@ -72,12 +73,6 @@ class _WatchMonitorState extends State<_WatchMonitor> {
     information = getStatus(widget.prefs);
     super.initState();
   }
-
-  // @override
-  // void dispose() {
-  //   print('dispose');
-  //   super.dispose();
-  // }
   @override
   Widget build(BuildContext context)
   {
@@ -145,11 +140,27 @@ class _WatchMonitorState extends State<_WatchMonitor> {
                           },
                         ),
                         ListTile(
-                          title: const Text("Fall Detect Setting",
+                          title: const Text("Impact Detect Setting",
                             style: TextStyle(fontSize: 20),),
                           onTap: () {
                             Navigator.pop(context);
-                            Navigator.push(context, MaterialPageRoute(builder: (context) => FallDetect()));
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => FallDetect(device:  widget.device,)));
+                          },
+                        ),
+                        ListTile(
+                          title: const Text("Sleep and Reset",
+                            style: TextStyle(fontSize: 20),),
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => SleepResetPage(device:  widget.device,)));
+                          },
+                        ),
+                        ListTile(
+                          title: const Text("Heartbeat and Tracking",
+                            style: TextStyle(fontSize: 20),),
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => TrackingHeartBeatPage(device:  widget.device,)));
                           },
                         ),
                       ],
@@ -196,7 +207,7 @@ class _WatchMonitorState extends State<_WatchMonitor> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 (widget.bleStatus != BleStatus.ready)?const Text('Bluetooth is not on, please turn on it',style:  TextStyle(color: Colors.red),):const SizedBox.shrink(),
-                                Text('Connection status: ${widget.connectionState.connectionState!=DeviceConnectionState.connected?'Connecting':'Connected'}'),
+                                Text('Connection status: ${widget.connectionState.connectionState}'),
                               ],
                             )),
 

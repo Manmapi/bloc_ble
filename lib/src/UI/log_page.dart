@@ -18,7 +18,7 @@ class _LogPageState extends State<LogPage> {
             body: SafeArea(
               child: GestureDetector(
                 onVerticalDragUpdate: (detail){
-                  print(detail);
+
                 },
                 child: Center(
                   child:Column(

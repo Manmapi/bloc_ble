@@ -9,7 +9,7 @@ class ImpactDetectSetting {
 void setImpactDetectSetting (SharedPreferences prefs , ImpactDetectSetting impactDetectSetting) async
 {
   await prefs.setString('gValue', impactDetectSetting.gValue.toString());
-  await prefs.setBool('fallDetectEnable', impactDetectSetting.impactDetectEnable);
+  await prefs.setBool('impactDetectEnable', impactDetectSetting.impactDetectEnable);
 }
 
 ImpactDetectSetting getImpactDetectSetting (SharedPreferences prefs)

@@ -4,7 +4,7 @@ import 'package:bloc_ble/src/preference/time_prefs.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class BleConnector{
+class BleConnector {
   BleConnector({required this.ble});
   final FlutterReactiveBle ble;
 
@@ -40,7 +40,7 @@ class BleConnector{
     _connection = ble.connectToAdvertisingDevice(id: device.id,
         connectionTimeout: const Duration(seconds: 2),
         withServices: device.serviceUuids,
-        prescanDuration:const Duration(seconds: 3)).listen((ConnectionStateUpdate state) async {
+        prescanDuration:const Duration(seconds: 2)).listen((ConnectionStateUpdate state) async {
             _pushState(state);
     },onError: (e) => throw e );
   }
@@ -51,7 +51,6 @@ class BleConnector{
 
   removeConnection(id) async {
     try{
-
       _connection.cancel();
     } catch (e){ 
       throw 'Error disconnection from a device: $e';
